@@ -1,0 +1,22 @@
+{
+    "name": "icepay/icepay",
+    "description": "ICEPAY prestashop module",
+    "type": "prestashop-module",
+    "autoload": {
+        "psr-4": {
+            "Icepay\\Icepay\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Channel-support.nl"
+        }
+    ],
+    "config": {
+        "prepend-autoloader": false
+    },
+    "require-dev": {
+        "prestashop/php-dev-tools": "^5.0",
+        "friendsofphp/php-cs-fixer": "^3.85"
+    }
+}

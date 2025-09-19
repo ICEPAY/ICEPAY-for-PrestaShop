@@ -1,0 +1,6 @@
+services:
+  icepay.service.icepay_payment:
+    class: Icepay\Icepay\Service\IcepayPaymentService
+    arguments:
+      - '@serializer'
+    public: true
