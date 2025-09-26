@@ -117,7 +117,7 @@ class Icepay extends PaymentModule
 
         $config = $this->getConfigFormValues();
         if ($config['ICEPAY_MERCHANT_ID'] && $config['ICEPAY_MERCHANT_SECRET']) {
-            $service = new IcepayPaymentService();
+            $service = $this->get('icepay.service.icepay_payment');
             $this->context->smarty->assign([
                 'available_methods' => $service->getAvailablePaymentMethods(),
             ]);
