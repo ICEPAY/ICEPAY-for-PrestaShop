@@ -25,6 +25,7 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'icepay_transaction` (
             `key` VARCHAR(128) NOT NULL,
             `id_cart` int(12) NOT NULL,
             `status` VARCHAR(128) NOT NULL,
+            `paymentMethod` VARCHAR(128) NOT NULL,
             `date_add` datetime NOT NULL,
             `date_upd` datetime NOT NULL,
             PRIMARY KEY  (`id_icepay_transaction`)
