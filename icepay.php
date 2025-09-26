@@ -111,7 +111,6 @@ class Icepay extends PaymentModule
         if (Tools::isSubmit('submitIcepayModule')) {
             $this->postProcess();
         }
-        (new icepayTransaction())->updatePayment('pi-01k0xwp7ztt4pzgm57v0j4qrr9', ['status' => 'TEST']);
 
         $this->context->smarty->assign('module_dir', $this->_path);
 
