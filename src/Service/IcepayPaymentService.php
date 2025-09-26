@@ -101,6 +101,8 @@ class IcepayPaymentService
             );
         } catch (IcepayException $e) {
             \PrestaShopLogger::addLog('ICEPAY payment creation failed: ' . $e->getMessage(), 3);
+            \PrestaShopLogger::addLog(var_export($request->toArray(), true), 3);
+            \PrestaShopLogger::addLog(var_export($responseData, true), 3);
 
             return null;
         }
