@@ -24,7 +24,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-include 'vendor/autoload.php';
+include _PS_MODULE_DIR_.'icepay/vendor/autoload.php';
 
 class Icepay extends PaymentModule
 {
@@ -61,7 +61,6 @@ class Icepay extends PaymentModule
         include dirname(__FILE__) . '/sql/install.php';
 
         return parent::install()
-            && $this->registerHook('displayBackOfficeHeader')
             && $this->registerHook('actionFrontControllerSetMedia')
             && $this->registerHook('actionAdminControllerSetMedia')
             && $this->registerHook('paymentOptions')
