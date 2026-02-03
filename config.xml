@@ -2,7 +2,7 @@
 <module>
 	<name>icepay</name>
 	<displayName><![CDATA[ICEPAY integration]]></displayName>
-	<version><![CDATA[1.0.1]]></version>
+	<version><![CDATA[1.0.2]]></version>
 	<description><![CDATA[Handle your payments ICEPAY payments with this module]]></description>
 	<author><![CDATA[Channel-support]]></author>
 	<tab><![CDATA[payments_gateways]]></tab>
