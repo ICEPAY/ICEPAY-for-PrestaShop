@@ -32,7 +32,7 @@ class Icepay extends PaymentModule
     {
         $this->name = 'icepay';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.1';
+        $this->version = '1.0.2';
         $this->author = 'Channel-support';
         $this->need_instance = 1;
         $this->bootstrap = true;
