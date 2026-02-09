@@ -51,6 +51,11 @@ class CreateCheckoutRequest
                 'prestashop' => [
                     'id_cart' => $this->id_cart,
                 ],
+                'integration' => [
+					'type' => 'prestashop',
+	                'version' => '1.0.1',
+	                'developer' => 'ICEPAY',
+                ],
             ],
             'status' => $this->status,
             'amount' => [
