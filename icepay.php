@@ -16,6 +16,7 @@
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  */
 
+use Icepay\Icepay\Dto\PaymentMethodDto;
 use Icepay\Icepay\Repository\icepayTransaction;
 use Icepay\Icepay\Service\IcepayPaymentService;
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
@@ -253,7 +254,9 @@ class Icepay extends PaymentModule
         foreach ($service->getAvailablePaymentMethods() as $method) {
             $option = new PaymentOption();
 
-            $options[] = $option->setCallToActionText($method->description)
+            $callToActionText = $this->getTranslatedDescription($method);
+
+            $options[] = $option->setCallToActionText($callToActionText)
                 ->setAction($this->context->link->getModuleLink($this->name, 'redirect', ['id' => $method->id], true))
                 ->setLogo($method->logo)
             ;
@@ -315,5 +318,19 @@ class Icepay extends PaymentModule
         ]);
 
         return $this->display($this->getLocalPath(), 'views/templates/hook/order_admin.tpl');
+    }
+
+    private function getTranslatedDescription(PaymentMethodDto $method): string
+    {
+        return match ($method->id) {
+            'ideal' => $this->l('iDEAL | Wero'),
+            'paypal' => $this->l('PayPal'),
+            'card' => $this->l('Card'),
+            'bancontact' => $this->l('Bancontact'),
+            'eps' => $this->l('EPS'),
+            'onlineueberweisen' => $this->l('Online Überweisen'),
+            'paybybank' => $this->l('Pay by Bank'),
+            default => $method->description,
+        };
     }
 }
