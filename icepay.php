@@ -18,6 +18,7 @@
 
 use Icepay\Icepay\Dto\PaymentMethodDto;
 use Icepay\Icepay\Repository\icepayTransaction;
+use Icepay\Icepay\Service\ConfigService;
 use Icepay\Icepay\Service\IcepayPaymentService;
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 
@@ -25,7 +26,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-include _PS_MODULE_DIR_.'icepay/vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 class Icepay extends PaymentModule
 {
@@ -33,7 +34,7 @@ class Icepay extends PaymentModule
     {
         $this->name = 'icepay';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.0';
+        $this->version = '1.2.0';
         $this->author = 'Channel-support';
         $this->need_instance = 1;
         $this->bootstrap = true;
@@ -119,8 +120,20 @@ class Icepay extends PaymentModule
         $config = $this->getConfigFormValues();
         if ($config['ICEPAY_MERCHANT_ID'] && $config['ICEPAY_MERCHANT_SECRET']) {
             $service = $this->get('icepay.service.icepay_payment');
+            $configService = $this->get('icepay.service.configuration');
+            $availableMethods = $service->getAvailablePaymentMethods();
+            $methodSettings = $configService->getPaymentMethodSettings()['methods'];
+
+            foreach ($availableMethods as $method) {
+                $method->adminLabel = $this->getTranslatedDescription($method);
+            }
+
             $this->context->smarty->assign([
-                'available_methods' => $service->getAvailablePaymentMethods(),
+                'available_methods' => $availableMethods,
+                'country_options' => $this->getCountryOptions(),
+                'method_country_lookup' => $this->buildMethodCountryLookup($methodSettings),
+                'method_settings_form_action' => $this->getModuleConfigAction(),
+                'method_settings_token' => Tools::getAdminTokenLite('AdminModules'),
             ]);
 
             $output .= $this->context->smarty->fetch($this->local_path . 'views/templates/admin/listPaymentMethods.tpl');
@@ -144,8 +157,7 @@ class Icepay extends PaymentModule
 
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submitIcepayModule';
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
-            . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+        $helper->currentIndex = $this->getModuleConfigAction();
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
         $helper->tpl_vars = [
@@ -208,7 +220,13 @@ class Icepay extends PaymentModule
         $form_values = $this->getConfigFormValues();
 
         foreach (array_keys($form_values) as $key) {
-            Configuration::updateValue($key, Tools::getValue($key));
+            if (Tools::getIsset($key)) {
+                Configuration::updateValue($key, Tools::getValue($key));
+            }
+        }
+
+        if (Tools::getIsset('ICEPAY_METHOD_IDS')) {
+            $this->savePaymentMethodSettings();
         }
     }
 
@@ -249,9 +267,15 @@ class Icepay extends PaymentModule
         }
 
         $service = new IcepayPaymentService();
+        $configService = new ConfigService();
+        $countryIso = $this->getCheckoutCountryIso($params['cart']);
 
         $options = [];
         foreach ($service->getAvailablePaymentMethods() as $method) {
+            if (!$configService->isMethodAvailableForCountry($method->id, $countryIso)) {
+                continue;
+            }
+
             $option = new PaymentOption();
 
             $callToActionText = $this->getTranslatedDescription($method);
@@ -332,5 +356,127 @@ class Icepay extends PaymentModule
             'paybybank' => $this->l('Pay by Bank'),
             default => $method->description,
         };
+    }
+
+    private function getModuleConfigAction(): string
+    {
+        return $this->context->link->getAdminLink('AdminModules', false)
+            . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+    }
+
+    private function getCountryOptions(): array
+    {
+        $countries = Country::getCountries((int) $this->context->language->id, true);
+        $options = [];
+
+        foreach ($countries as $country) {
+            if (empty($country['iso_code']) || empty($country['name'])) {
+                continue;
+            }
+
+            $options[] = [
+                'iso_code' => strtoupper((string) $country['iso_code']),
+                'name' => (string) $country['name'],
+            ];
+        }
+
+        usort($options, static function (array $left, array $right): int {
+            return strcasecmp($left['name'], $right['name']);
+        });
+
+        return $options;
+    }
+
+    private function savePaymentMethodSettings(): void
+    {
+        $configService = new ConfigService();
+        $settings = $configService->getPaymentMethodSettings();
+        $methodIds = Tools::getValue('ICEPAY_METHOD_IDS', []);
+        $submittedCountries = Tools::getValue('ICEPAY_METHOD_COUNTRIES', []);
+
+        if (!is_array($methodIds)) {
+            return;
+        }
+
+        foreach ($methodIds as $methodId) {
+            if (!is_string($methodId) || '' === $methodId) {
+                continue;
+            }
+
+            $countries = $submittedCountries[$methodId] ?? [];
+            if (!is_array($countries)) {
+                $countries = [];
+            }
+
+            $settings['methods'][$methodId] = [
+                'countries' => array_values(
+                    array_filter(
+                        array_map(static function ($countryIso): string {
+                            return strtoupper(trim((string) $countryIso));
+                        }, $countries),
+                        static function (string $countryIso): bool {
+                            return '' !== $countryIso;
+                        }
+                    )
+                ),
+            ];
+        }
+
+        $configService->savePaymentMethodSettings($settings);
+    }
+
+    private function buildMethodCountryLookup(array $methodSettings): array
+    {
+        $lookup = [];
+
+        foreach ($methodSettings as $methodId => $settings) {
+            if (!is_array($settings) || !isset($settings['countries']) || !is_array($settings['countries'])) {
+                continue;
+            }
+
+            foreach ($settings['countries'] as $countryIso) {
+                if (!is_string($countryIso) || '' === $countryIso) {
+                    continue;
+                }
+
+                $lookup[$methodId][strtoupper($countryIso)] = true;
+            }
+        }
+
+        return $lookup;
+    }
+
+    private function getCheckoutCountryIso(?Cart $cart): ?string
+    {
+        if (!$cart instanceof Cart) {
+            return null;
+        }
+
+        $addressIds = [
+            (int) $cart->id_address_delivery,
+            (int) $cart->id_address_invoice,
+        ];
+
+        foreach ($addressIds as $addressId) {
+            if ($addressId <= 0) {
+                continue;
+            }
+
+            $address = new Address($addressId);
+            if (!Validate::isLoadedObject($address) || empty($address->id_country)) {
+                continue;
+            }
+
+            $country = new Country((int) $address->id_country);
+            if (Validate::isLoadedObject($country) && !empty($country->iso_code)) {
+                return strtoupper((string) $country->iso_code);
+            }
+        }
+
+        if (isset($this->context->country) && Validate::isLoadedObject($this->context->country) && !empty($this->context->country->iso_code)) {
+            return strtoupper((string) $this->context->country->iso_code);
+        }
+
+        return null;
     }
 }

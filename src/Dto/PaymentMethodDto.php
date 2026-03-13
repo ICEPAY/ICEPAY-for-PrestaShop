@@ -25,6 +25,7 @@ class PaymentMethodDto
 {
     public string $id;
     public string $description;
+    public ?string $adminLabel = null;
 
     /** @var string|null */
     public ?string $logo = null;

@@ -29,7 +29,7 @@
     {if Tools::isSubmit('failed')}
         <h1>{l s='Please contact us!' mod='icepay'}</h1>
         <p>
-            <a href="{$link->getPageLink('contact', true)}">{l s='Contact us on this page.' mod='icepay'}</a>
+            <a href="{$link->getPageLink('contact', true)|escape:'html'}">{l s='Contact us on this page.' mod='icepay'}</a>
             {if icepayTransaction   }
                 {l s='using your transaction id:' mod='icepay'} {$icepayTransaction|escape:'htmlall':'UTF-8'}
             {/if}

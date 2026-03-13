@@ -4,3 +4,6 @@ services:
     arguments:
       - '@serializer'
     public: true
+  icepay.service.configuration:
+    class: Icepay\Icepay\Service\ConfigService
+    public: true

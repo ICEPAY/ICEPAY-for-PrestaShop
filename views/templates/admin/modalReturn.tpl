@@ -21,9 +21,9 @@
 *}
 
 <div class="form-group row d-flex">
-    <div class="col-6">{$transaction->key}</div>
+    <div class="col-6">{$transaction->key|escape:'html':'UTF-8'}</div>
     <div class="col-2">{$transaction->amount->value / 100}</div>
-    <div class="col-4">{$transaction->status}</div>
+    <div class="col-4">{$transaction->status|escape:'html':'UTF-8'}</div>
 </div>
 <hr>
 
@@ -36,10 +36,10 @@
     </div>
     {foreach $transaction->refunds as $refund}
         <div class="form-group row d-flex">
-            <div class="col-6">{$refund['key']}</div>
+            <div class="col-6">{$refund['key']|escape:'html':'UTF-8'}</div>
             <div class="col-2">{$refund['amount']['value'] / 100}</div>
-            <div class="col-4">{$refund['status']}</div>
-            <div class="col-12">{l s='Description: ' mod='icepay'}{$refund['description']}</div>
+            <div class="col-4">{$refund['status']|escape:'html':'UTF-8'}</div>
+            <div class="col-12">{l s='Description: ' mod='icepay'}{$refund['description']|escape:'html':'UTF-8'}</div>
         </div>
     {/foreach}
 {else}

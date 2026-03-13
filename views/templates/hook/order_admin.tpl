@@ -31,8 +31,8 @@
 
         {foreach $payment_rows as $row}
             <div class="form-group row d-flex">
-                <div class="col-4">{l s='Transactie ID' mod='icepay'}: {$row['key']}</div>
-                <div class="col-4">{l s='Status' mod='icepay'}: {$row['status']}</div>
+                <div class="col-4">{l s='Transactie ID' mod='icepay'}: {$row['key']|escape:'html':'UTF-8'}</div>
+                <div class="col-4">{l s='Status' mod='icepay'}: {$row['status']|escape:'htmlall':'UTF-8'}</div>
                 <div class="col-4 actions">
                     <button
                             class="btn btn-danger js-refund-open"
@@ -47,8 +47,8 @@
             {if $row['refunds']}
                 {foreach $row['refunds'] as $refund}
                     <div class="form-group row d-flex">
-                        <div class="col-4">{l s='Refund ID' mod='icepay'}: {$refund['key_refund']}</div>
-                        <div class="col-4">{l s='Status' mod='icepay'}: {$refund['status']}</div>
+                        <div class="col-4">{l s='Refund ID' mod='icepay'}: {$refund['key_refund']|escape:'html':'UTF-8'}</div>
+                        <div class="col-4">{l s='Status' mod='icepay'}: {$refund['status']|escape:'htmlall':'UTF-8'}</div>
                     </div>
                 {/foreach}
             {/if}

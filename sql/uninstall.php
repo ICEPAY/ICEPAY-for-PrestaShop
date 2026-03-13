@@ -28,4 +28,8 @@ foreach ($tables as $table) {
     Db::getInstance()->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . pSQL($table) . '`');
 }
 
+Configuration::deleteByName('ICEPAY_MERCHANT_ID');
+Configuration::deleteByName('ICEPAY_MERCHANT_SECRET');
+Configuration::deleteByName('ICEPAY_PAYMENT_METHOD_SETTINGS');
+
 return true;
