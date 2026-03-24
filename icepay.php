@@ -221,12 +221,14 @@ class Icepay extends PaymentModule
 
         foreach (array_keys($form_values) as $key) {
             if (Tools::getIsset($key)) {
-                Configuration::updateValue($key, Tools::getValue($key));
-            }
-        }
+                $value = Tools::getValue($key);
 
-        if (Tools::getIsset('ICEPAY_METHOD_IDS')) {
-            $this->savePaymentMethodSettings();
+                if ('ICEPAY_MERCHANT_SECRET' === $key && '' === trim((string) $value)) {
+                    continue;
+                }
+
+                Configuration::updateValue($key, $value);
+            }
         }
     }
 
@@ -318,6 +320,19 @@ class Icepay extends PaymentModule
 
             $this->context->controller->addJS($this->getPathUri() . 'views/js/back.js');
         }
+
+        if ('AdminModules' === $currentController && Tools::getValue('configure') === $this->name) {
+            Media::addJsDef([
+                'icepayAjaxUrl' => $this->context->link->getAdminLink('AdminIcepayAjax', true, [], ['ajax' => 1]),
+                'icepayConfigMessages' => [
+                    'saveSuccess' => $this->l('Payment method configuration saved.'),
+                    'saveError' => $this->l('Saving payment method configuration failed.'),
+                    'saveInProgress' => $this->l('Saving...'),
+                ],
+            ]);
+
+            $this->context->controller->addJS($this->getPathUri() . 'views/js/configuration.js');
+        }
     }
 
     /**
@@ -385,44 +400,6 @@ class Icepay extends PaymentModule
         });
 
         return $options;
-    }
-
-    private function savePaymentMethodSettings(): void
-    {
-        $configService = new ConfigService();
-        $settings = $configService->getPaymentMethodSettings();
-        $methodIds = Tools::getValue('ICEPAY_METHOD_IDS', []);
-        $submittedCountries = Tools::getValue('ICEPAY_METHOD_COUNTRIES', []);
-
-        if (!is_array($methodIds)) {
-            return;
-        }
-
-        foreach ($methodIds as $methodId) {
-            if (!is_string($methodId) || '' === $methodId) {
-                continue;
-            }
-
-            $countries = $submittedCountries[$methodId] ?? [];
-            if (!is_array($countries)) {
-                $countries = [];
-            }
-
-            $settings['methods'][$methodId] = [
-                'countries' => array_values(
-                    array_filter(
-                        array_map(static function ($countryIso): string {
-                            return strtoupper(trim((string) $countryIso));
-                        }, $countries),
-                        static function (string $countryIso): bool {
-                            return '' !== $countryIso;
-                        }
-                    )
-                ),
-            ];
-        }
-
-        $configService->savePaymentMethodSettings($settings);
     }
 
     private function buildMethodCountryLookup(array $methodSettings): array

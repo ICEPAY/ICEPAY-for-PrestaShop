@@ -19,6 +19,7 @@
 use Icepay\Icepay\Dto\CreateRefundRequest;
 use Icepay\Icepay\Dto\CreateRefundResponse;
 use Icepay\Icepay\Repository\icepayRefund;
+use Icepay\Icepay\Service\ConfigService;
 use Icepay\Icepay\Service\IcepayPaymentService;
 
 if (!defined('_PS_VERSION_')) {
@@ -113,5 +114,35 @@ class AdminIcepayAjaxController extends ModuleAdminController
                 'message' => $this->module->l('Refund not send: ', 'icepay') . $e->getMessage(),
             ]));
         }
+    }
+
+    public function displayAjaxSavePaymentMethodConfig()
+    {
+        $methodId = (string) Tools::getValue('method_id', '');
+        $countries = Tools::getValue('countries', []);
+
+        if ('' === trim($methodId)) {
+            exit(json_encode([
+                'ok' => false,
+                'message' => $this->module->l('Missing payment method.', 'AdminIcepayAjaxController'),
+            ]));
+        }
+
+        if (!is_array($countries)) {
+            $countries = [];
+        }
+
+        $configService = new ConfigService();
+        $settings = $configService->getPaymentMethodSettings();
+        $settings['methods'][$methodId] = [
+            'countries' => array_values($countries),
+        ];
+
+        $configService->savePaymentMethodSettings($settings);
+
+        exit(json_encode([
+            'ok' => true,
+            'message' => $this->module->l('Payment method configuration saved.', 'AdminIcepayAjaxController'),
+        ]));
     }
 }
